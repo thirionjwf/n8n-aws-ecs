@@ -3,7 +3,7 @@ aws_region  = "eu-west-1"
 # aws_profile = "your-aws-profile"  # or set AWS_PROFILE env var
 
 bucket_name = "<your bucket name>"
-region      = "us-west-1"
+region      = "eu-west-1"
 
 # Networking
 vpc_id              = "vpc-xxxxxxxx"

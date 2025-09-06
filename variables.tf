@@ -11,6 +11,16 @@ variable "aws_profile" {
   default     = null
 }
 
+variable "bucket_name" {
+  type        = string
+  description = "S3 bucket name for Terraform remote state (backend). Note: not used directly in backend block."
+}
+
+variable "region" {
+  type        = string
+  description = "AWS region for provider and resources."
+}
+
 # Networking
 variable "vpc_id" {
   type        = string
