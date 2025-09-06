@@ -1,0 +1,20 @@
+terraform {
+  required_version = ">= 1.6.0"
+
+  backend "s3" {
+    bucket         = "<your bucket name>"
+    key            = "n8n/terraform.tfstate"
+    region         = "eu-west-1"       # same as your bucket region
+    profile        = "you-profile"     # your AWS CLI profile
+    dynamodb_table = "terraform-locks" # optional: for state locking
+    encrypt        = true
+  }
+
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = ">= 6.0.0"
+    }
+  }
+}
+

@@ -1,0 +1,9 @@
+# Migrate with: terraform init -backend-config=backend.hcl -migrate-state
+
+bucket         = "<your bucket name>"
+key            = "n8n/terraform.tfstate"
+region         = "eu-west-1"
+profile        = "santam"
+dynamodb_table = "terraform-locks"
+encrypt        = true
+

@@ -1,0 +1,32 @@
+# AWS settings
+aws_region  = "eu-west-1"
+# aws_profile = "your-aws-profile"  # or set AWS_PROFILE env var
+
+bucket_name = "<your bucket name>"
+region      = "us-west-1"
+
+# Networking
+vpc_id              = "vpc-xxxxxxxx"
+subnet_ids          = ["subnet-aaaaaaaa", "subnet-bbbbbbbb", "subnet-cccccccc"]
+public_subnet_ids   = ["subnet-dddddddd", "subnet-eeeeeeee", "subnet-ffffffff"]
+use_private_subnets = true
+
+# ALB / TLS
+alb_allowed_cidr_blocks = ["0.0.0.0/0"]  # tighten to your office / Cloudflare ranges
+ssl_policy              = "ELBSecurityPolicy-TLS13-1-2-2021-06"
+
+# ECS / app
+container_image = "n8nio/n8n:1.40.0"
+desired_count   = 1
+fargate_type    = "FARGATE_SPOT"
+
+# Naming & tagging
+prefix = "n8n"
+tags = {
+  Environment = "dev"        # change to staging/production as needed
+  Owner       = "your-team"  # update with your team/owner name
+}
+
+# App URL (set when you have DNS in Cloudflare, must end with "/")
+url = null
+
