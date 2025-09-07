@@ -3,7 +3,7 @@
 bucket         = "<your bucket name>"
 key            = "n8n/terraform.tfstate"
 region         = "eu-west-1"
-profile        = "santam"
+profile        = "your-profile"
 dynamodb_table = "terraform-locks"
 encrypt        = true
 
