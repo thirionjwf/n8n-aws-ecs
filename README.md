@@ -1,4 +1,4 @@
-# n8n on AWS ECS (Terraform)
+# n8n on AWS ECS with Terraform
 
 Provision **n8n** on **AWS ECS Fargate** using the `elasticscale/n8n/aws` Terraform module.
 
