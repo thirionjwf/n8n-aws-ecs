@@ -21,6 +21,13 @@ variable "region" {
   description = "AWS region for provider and resources."
 }
 
+# --- NEW ---
+variable "permissions_boundary_policy_name" {
+  type        = string
+  description = "Name of the existing IAM policy used as a permissions boundary"
+  default     = "permission-boundary"
+}
+
 # Networking
 variable "vpc_id" {
   type        = string
@@ -94,4 +101,3 @@ variable "url" {
   description = "Public URL (must end with '/' if set); null uses ALB DNS"
   default     = null
 }
-

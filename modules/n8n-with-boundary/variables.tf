@@ -1,0 +1,40 @@
+variable "permissions_boundary_arn" {
+  description = "ARN of the existing permissions boundary policy"
+  type        = string
+}
+
+# passthroughs to the upstream module (add others if you start using them)
+variable "prefix"              { type = string  default = "n8n" }
+variable "vpc_id"              { type = string  default = null }
+variable "subnet_ids"          { type = list(string) default = [] }
+variable "public_subnet_ids"   { type = list(string) default = [] }
+variable "use_private_subnets" { type = bool   default = false }
+
+variable "container_image" { type = string default = "n8nio/n8n:1.4.0" }
+variable "desired_count"   { type = number default = 1 }
+variable "fargate_type"    { type = string default = "FARGATE_SPOT" }
+
+variable "alb_allowed_cidr_blocks" { type = list(string) default = ["0.0.0.0/0"] }
+variable "certificate_arn"         { type = string default = null }
+variable "ssl_policy"              { type = string default = "ELBSecurityPolicy-TLS13-1-2-2021-06" }
+variable "url"                     { type = string default = null }
+variable "tags"                    { type = map(string) default = null }
+
+# Optional: if upstream role names ever change, allow overrides here
+variable "execution_role_name" {
+  description = "Name of the ECS task execution role created by the upstream module"
+  type        = string
+  default     = null
+}
+variable "task_role_name" {
+  description = "Name of the ECS task role created by the upstream module"
+  type        = string
+  default     = null
+}
+
+# Optional: pass through CLI profile so local-exec uses same credentials
+variable "aws_profile" {
+  description = "AWS CLI profile for local-exec (optional)"
+  type        = string
+  default     = null
+}

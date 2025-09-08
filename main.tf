@@ -1,6 +1,15 @@
+# Resolve the existing boundary policy by NAME to get its ARN
+data "aws_iam_policy" "permission_boundary" {
+  name = var.permissions_boundary_policy_name
+}
+
 module "n8n" {
-  source  = "elasticscale/n8n/aws"
-  version = ">= 4.0.0"
+  # Use the wrapper module instead of the registry source
+  source = "./modules/n8n-with-boundary"
+
+  # --- NEW: pass boundary ARN & (optional) AWS profile for CLI ---
+  permissions_boundary_arn = data.aws_iam_policy.permission_boundary.arn
+  aws_profile              = var.aws_profile
 
   # Networking
   vpc_id              = var.vpc_id
@@ -25,4 +34,3 @@ module "n8n" {
   # Public URL (null = ALB DNS; if hostname, include trailing slash)
   url = var.url
 }
-
