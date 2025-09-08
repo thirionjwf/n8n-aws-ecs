@@ -28,51 +28,66 @@ module "n8n" {
   tags                    = var.tags
 }
 
-# 2) Derive role names based on upstream convention
+# 2) Role names based on upstream convention (override via vars if needed)
 locals {
   default_execution_role = "${var.prefix}-executionrole"
   default_task_role      = "${var.prefix}-taskrole"
 
   execution_role_name = coalesce(var.execution_role_name, local.default_execution_role)
   task_role_name      = coalesce(var.task_role_name,      local.default_task_role)
-
-  # Optional profile flag (empty string if not set)
-  profile_flag = var.aws_profile != null ? " --profile ${var.aws_profile}" : ""
 }
 
 # 3) Apply permissions boundary using AWS CLI after roles exist
-# Use upstream output (lb_dns_name) to force a reliable dependency
+#    Use PowerShell so it runs on Windows; add dependency on upstream module.
 resource "null_resource" "set_permissions_boundary_execution" {
   triggers = {
-    role_name = local.execution_role_name
-    boundary  = var.permissions_boundary_arn
-    mod_hash  = module.n8n.lb_dns_name
+    role_name    = local.execution_role_name
+    boundary     = var.permissions_boundary_arn
+    mod_hash     = module.n8n.lb_dns_name
+    # Make profile available to destroy-time provisioner via self.triggers.*
+    profile_flag = var.aws_profile != null ? " --profile ${var.aws_profile}" : ""
   }
 
+  # Create: put boundary
   provisioner "local-exec" {
-    command = "aws iam put-role-permissions-boundary --role-name ${self.triggers.role_name} --permissions-boundary ${self.triggers.boundary}${local.profile_flag}"
+    command = <<-EOT
+      powershell -NoProfile -Command "aws iam put-role-permissions-boundary --role-name ${self.triggers.role_name} --permissions-boundary ${self.triggers.boundary}${self.triggers.profile_flag}"
+    EOT
   }
 
-  # Cleanup on destroy so delete works smoothly
+  # Destroy: remove boundary (ignore error if already gone)
   provisioner "local-exec" {
     when    = destroy
-    command = "aws iam delete-role-permissions-boundary --role-name ${self.triggers.role_name}${local.profile_flag} || true"
+    command = <<-EOT
+      powershell -NoProfile -Command "& { aws iam delete-role-permissions-boundary --role-name ${self.triggers.role_name}${self.triggers.profile_flag}; if ($LASTEXITCODE -ne 0) { Write-Host 'ignore failure'; exit 0 } }"
+    EOT
   }
+
+  depends_on = [module.n8n]
 }
 
 resource "null_resource" "set_permissions_boundary_task" {
   triggers = {
-    role_name = local.task_role_name
-    boundary  = var.permissions_boundary_arn
-    mod_hash  = module.n8n.lb_dns_name
+    role_name    = local.task_role_name
+    boundary     = var.permissions_boundary_arn
+    mod_hash     = module.n8n.lb_dns_name
+    profile_flag = var.aws_profile != null ? " --profile ${var.aws_profile}" : ""
   }
 
+  # Create: put boundary
   provisioner "local-exec" {
-    command = "aws iam put-role-permissions-boundary --role-name ${self.triggers.role_name} --permissions-boundary ${self.triggers.boundary}${local.profile_flag}"
+    command = <<-EOT
+      powershell -NoProfile -Command "aws iam put-role-permissions-boundary --role-name ${self.triggers.role_name} --permissions-boundary ${self.triggers.boundary}${self.triggers.profile_flag}"
+    EOT
   }
 
+  # Destroy: remove boundary (ignore error if already gone)
   provisioner "local-exec" {
     when    = destroy
-    command = "aws iam delete-role-permissions-boundary --role-name ${self.triggers.role_name}${local.profile_flag} || true"
+    command = <<-EOT
+      powershell -NoProfile -Command "& { aws iam delete-role-permissions-boundary --role-name ${self.triggers.role_name}${self.triggers.profile_flag}; if ($LASTEXITCODE -ne 0) { Write-Host 'ignore failure'; exit 0 } }"
+    EOT
   }
+
+  depends_on = [module.n8n]
 }
