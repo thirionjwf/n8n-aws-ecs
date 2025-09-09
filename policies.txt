@@ -1,0 +1,55 @@
+PowerUserAccess Inline Policy:
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "VisualEditor0",
+            "Effect": "Allow",
+            "Action": [
+                "iam:CreatePolicy",
+                "iam:GetRole",
+                "iam:GetRolePolicy",
+                "iam:GetPolicy",
+                "iam:GetPolicyVersion",
+                "iam:PassRole",
+                "iam:ListRolePolicies",
+                "iam:DeleteRolePolicy",
+                "iam:ListAttachedRolePolicies",
+                "iam:DetachRolePolicy",
+                "iam:PutRolePolicy",
+                "iam:ListInstanceProfilesForRole",
+                "iam:ListPolicies",
+                "iam:UntagRole",
+                "iam:TagRole",
+                "iam:DeletePolicy",
+                "iam:CreateRole",
+                "iam:DeleteRole",
+                "iam:AttachRolePolicy"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+
+
+permission-boundary policy:
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "AllowEverythingExceptIAMUserRoleCreation",
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "*"
+        },
+        {
+            "Sid": "DenyIAMUserAndRoleCreation",
+            "Effect": "Deny",
+            "Action": [
+                "iam:CreateRole",
+                "iam:CreateUser"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
