@@ -5,12 +5,6 @@ variable "aws_region" {
   default     = "eu-west-1"
 }
 
-variable "aws_profile" {
-  type        = string
-  description = "AWS CLI profile to use (or set AWS_PROFILE env var)"
-  default     = null
-}
-
 variable "bucket_name" {
   type        = string
   description = "S3 bucket name for Terraform remote state (backend). Note: not used directly in backend block."
@@ -100,4 +94,27 @@ variable "url" {
   type        = string
   description = "Public URL (must end with '/' if set); null uses ALB DNS"
   default     = null
+}
+
+# AWS Profile
+variable "aws_profile" {
+  type        = string
+  description = "AWS CLI profile name (optional)"
+  default     = null
+}
+
+# Existing Security Groups (managed by admins)
+variable "alb_security_group_id" {
+  type        = string
+  description = "ID of existing ALB security group (managed by admins)"
+}
+
+variable "efs_security_group_id" {
+  type        = string
+  description = "ID of existing EFS security group (managed by admins)"
+}
+
+variable "ecs_security_group_id" {
+  type        = string
+  description = "ID of existing ECS security group (managed by admins)"
 }

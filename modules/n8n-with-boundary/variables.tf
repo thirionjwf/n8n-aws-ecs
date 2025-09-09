@@ -82,9 +82,18 @@ variable "task_role_name" {
   default     = null
 }
 
-# Optional: pass through CLI profile so local-exec uses same credentials
-variable "aws_profile" {
-  description = "AWS CLI profile for local-exec (optional)"
+# Existing Security Groups (managed by admins)
+variable "alb_security_group_id" {
   type        = string
-  default     = null
+  description = "ID of existing ALB security group (managed by admins)"
+}
+
+variable "efs_security_group_id" {
+  type        = string
+  description = "ID of existing EFS security group (managed by admins)"
+}
+
+variable "ecs_security_group_id" {
+  type        = string
+  description = "ID of existing ECS security group (managed by admins)"
 }

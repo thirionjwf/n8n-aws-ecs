@@ -1,15 +1,10 @@
-# Resolve the existing boundary policy by NAME to get its ARN
-data "aws_iam_policy" "permission_boundary" {
-  name = var.permissions_boundary_policy_name
-}
-
+# Use hardcoded permissions boundary ARN to avoid data source hanging issues
 module "n8n" {
   # Use the wrapper module instead of the registry source
   source = "./modules/n8n-with-boundary"
 
-  # --- NEW: pass boundary ARN & (optional) AWS profile for CLI ---
-  permissions_boundary_arn = data.aws_iam_policy.permission_boundary.arn
-  aws_profile              = var.aws_profile
+  # --- Use hardcoded boundary ARN ---
+  permissions_boundary_arn = "arn:aws:iam::314429811214:policy/permission-boundary"
 
   # Networking
   vpc_id              = var.vpc_id
@@ -33,4 +28,9 @@ module "n8n" {
 
   # Public URL (null = ALB DNS; if hostname, include trailing slash)
   url = var.url
+
+  # Existing Security Groups (managed by admins)
+  alb_security_group_id = var.alb_security_group_id
+  efs_security_group_id = var.efs_security_group_id
+  ecs_security_group_id = var.ecs_security_group_id
 }
