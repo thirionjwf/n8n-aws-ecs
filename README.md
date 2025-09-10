@@ -1,4 +1,274 @@
-# n8n on AWS ECS with Terraform
+# n8n on AWS ECS with Terraform (Corporate Environment)
+
+Deploy **n8n** on **AWS ECS Fargate** in a corporate environment with IAM permissions boundaries and admin-managed security groups.
+
+This is a specialized fork of the [elasticscale/terraform-aws-n8n](https://github.com/elasticscale/terraform-aws-n8n) module, modified for corporate environments where:
+
+- **Security Groups** are managed by the Cloud Security team (not Terraform)
+- **IAM Roles** require a permissions boundary policy
+- **Private ECR** or DockerHub can be used as container registry
+
+---
+
+## Corporate Environment Requirements
+
+### Prerequisites
+
+1. **VPC and Subnets**: You need an existing VPC with:
+   - 3 private subnets (for ECS tasks)
+   - 3 public subnets (for ALB)
+   - Subnets distributed across different availability zones
+   - Public subnets attached to Internet Gateway
+   - Private subnets routed through NAT Gateway(s) with Elastic IPs
+
+2. **Security Groups**: The following security groups must be pre-created by your Cloud Security team:
+
+   | Security Group | Purpose | Inbound Rules | Outbound Rules |
+   |---------------|---------|---------------|----------------|
+   | `n8n-alb` | Application Load Balancer | TCP 80, 443 from 0.0.0.0/0 | All traffic |
+   | `n8n-sg` | ECS Tasks | TCP 5678 from n8n-alb SG | All traffic |
+   | `n8n-efs` | Elastic File System | TCP 2049, 2999 from n8n-sg | All traffic |
+
+3. **IAM Permissions Boundary**: A policy that allows most actions but restricts IAM user/role creation:
+
+   ```json
+   {
+     "Version": "2012-10-17",
+     "Statement": [
+       {
+         "Sid": "AllowEverythingExceptIAMUserRoleCreation",
+         "Effect": "Allow",
+         "Action": "*",
+         "Resource": "*"
+       },
+       {
+         "Sid": "DenyIAMUserAndRoleCreation",
+         "Effect": "Deny",
+         "Action": [
+           "iam:CreateRole",
+           "iam:CreateUser"
+         ],
+         "Resource": "*"
+       }
+     ]
+   }
+   ```
+
+### Container Registry Options
+
+#### Option 1: Private ECR (Recommended for Corporate)
+
+1. Create ECR repository (e.g., `external/n8n`)
+2. Upload n8n image to ECR:
+
+   ```bash
+   # Pull official n8n image
+   docker pull n8nio/n8n:latest
+   
+   # Tag for your ECR
+   docker tag n8nio/n8n:latest <account-id>.dkr.ecr.<region>.amazonaws.com/external/n8n:latest
+   
+   # Login to ECR
+   aws ecr get-login-password --region <region> | docker login --username AWS --password-stdin <account-id>.dkr.ecr.<region>.amazonaws.com
+   
+   # Push to ECR
+   docker push <account-id>.dkr.ecr.<region>.amazonaws.com/external/n8n:latest
+   ```
+
+#### Option 2: DockerHub (if allowed)
+
+Use the default DockerHub image: `n8nio/n8n:latest`
+
+---
+
+## Quick Start
+
+1. **Copy example files**:
+
+   ```bash
+   cp providers.tf.example providers.tf
+   cp backend.hcl.example backend.hcl  
+   cp terraform.tfvars.example terraform.tfvars
+   ```
+
+2. **Configure backend** (`backend.hcl`):
+   - Set your AWS profile name
+   - Set S3 bucket for state storage
+   - Set DynamoDB table for state locking (optional)
+
+3. **Configure deployment** (`terraform.tfvars`):
+   ```hcl
+   # AWS Configuration
+   aws_region = "us-west-2"
+   aws_profile = "your-corporate-profile"
+   
+   # Networking (existing VPC)
+   vpc_id = "vpc-xxxxxxxxx"
+   subnet_ids = ["subnet-aaaaa", "subnet-bbbbb", "subnet-ccccc"]
+   public_subnet_ids = ["subnet-11111", "subnet-22222", "subnet-33333"]
+   
+   # Security Groups (pre-created by security team)
+   alb_security_group_id = "sg-xxxxxxxxx"  # n8n-alb
+   ecs_security_group_id = "sg-yyyyyyyyy"  # n8n-sg
+   efs_security_group_id = "sg-zzzzzzzzz"  # n8n-efs
+   
+   # IAM Permissions Boundary
+   permissions_boundary_policy_name = "permission-boundary"
+   
+   # Container Registry
+   ecr_repository_name = "external/n8n"  # For ECR
+   # container_image = "n8nio/n8n:latest"  # For DockerHub
+   ```
+
+4. **Deploy**:
+
+   ```bash
+   # Configure AWS credentials
+   export AWS_PROFILE=your-corporate-profile
+   
+   # Initialize Terraform
+   terraform init -reconfigure -backend-config=backend.hcl
+   
+   # Deploy
+   terraform validate
+   terraform plan
+   terraform apply
+   ```
+
+---
+
+## Architecture
+
+This deployment creates the following AWS resources:
+
+### Core Infrastructure
+- **ECS Cluster**: Fargate cluster for running n8n containers
+- **ECS Service**: Manages n8n task instances (recommended: 1 task)
+- **Application Load Balancer**: Routes traffic to ECS tasks
+- **Elastic File System**: Persistent storage for n8n data
+
+### IAM Resources (with Permissions Boundary)
+- **Task Role**: IAM role for n8n application with permissions boundary
+- **Execution Role**: IAM role for ECS task execution with ECR access and permissions boundary
+- **ECR Repository Policy**: Grants ECS execution role access to pull images
+
+### Security
+- **Security Groups**: Uses existing security groups (managed by security team)
+- **IAM Permissions Boundary**: Applied to all created IAM roles
+- **Private Subnets**: ECS tasks run in private subnets for enhanced security
+
+---
+
+## Configuration Variables
+
+### Required Variables
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `aws_region` | AWS region for deployment | `"us-west-2"` |
+| `aws_profile` | AWS CLI profile name | `"corporate-profile"` |
+| `vpc_id` | Existing VPC ID | `"vpc-xxxxxxxxx"` |
+| `subnet_ids` | Private subnet IDs for ECS tasks | `["subnet-aaa", "subnet-bbb"]` |
+| `public_subnet_ids` | Public subnet IDs for ALB | `["subnet-111", "subnet-222"]` |
+| `alb_security_group_id` | Pre-created ALB security group | `"sg-xxxxxxxxx"` |
+| `ecs_security_group_id` | Pre-created ECS security group | `"sg-yyyyyyyyy"` |
+| `efs_security_group_id` | Pre-created EFS security group | `"sg-zzzzzzzzz"` |
+| `permissions_boundary_policy_name` | IAM permissions boundary policy | `"permission-boundary"` |
+
+### Container Registry Variables (Choose One)
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `ecr_repository_name` | ECR repository name (for private ECR) | `"external/n8n"` |
+| `container_image` | Full Docker image path (for DockerHub) | `"n8nio/n8n:latest"` |
+
+### Optional Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `environment_name` | Environment name prefix | `"n8n"` |
+| `desired_count` | Number of ECS tasks | `1` |
+| `cpu` | ECS task CPU units | `512` |
+| `memory` | ECS task memory (MB) | `1024` |
+| `capacity_provider` | ECS capacity provider | `"FARGATE_SPOT"` |
+
+---
+
+## Troubleshooting
+
+### Common Issues
+
+#### Security Group Access
+- **Error**: ECS tasks cannot reach EFS
+- **Solution**: Verify EFS security group allows TCP 2049 and 2999 from ECS security group
+
+#### ECR Authentication
+- **Error**: Image pull failures from ECR
+- **Solution**: Ensure ECS execution role has ECR permissions and repository policy allows access
+
+#### Permissions Boundary
+- **Error**: IAM role creation fails
+- **Solution**: Verify permissions boundary policy exists and is attached during role creation
+
+#### VPC/Subnet Issues
+- **Error**: No matching VPC or subnets found
+- **Solution**: Confirm region, profile, and subnet IDs belong to specified VPC
+
+### Validation Commands
+
+```bash
+# Verify VPC and subnets
+aws ec2 describe-vpcs --vpc-ids <vpc-id> --region <region>
+aws ec2 describe-subnets --subnet-ids <subnet-id> --region <region>
+
+# Check security groups
+aws ec2 describe-security-groups --group-ids <sg-id> --region <region>
+
+# Verify IAM permissions boundary
+aws iam get-policy --policy-arn arn:aws:iam::<account>:policy/<boundary-name>
+
+# Test ECR access
+aws ecr describe-repositories --repository-names <repo-name> --region <region>
+```
+
+---
+
+## Important Notes
+
+### Corporate Compliance
+- **Permissions Boundary**: All IAM roles created by this module automatically include the specified permissions boundary
+- **Security Groups**: This module does NOT create or modify security groups - they must be pre-created
+- **ECR Access**: Repository-level policies are created to grant specific access to ECS execution roles
+
+### Networking Requirements
+- **Private Subnets**: ECS tasks run in private subnets for security
+- **NAT Gateway**: Required for ECS tasks to access internet (ECR, package updates)
+- **Load Balancer**: Deployed in public subnets to receive internet traffic
+
+### Security Considerations
+- **Least Privilege**: IAM roles include only necessary permissions
+- **Network Isolation**: Tasks isolated in private subnets
+- **Encryption**: EFS supports encryption at rest and in transit
+
+---
+
+## Cleanup
+
+To destroy the deployment:
+
+```bash
+terraform destroy
+```
+
+**Note**: This will destroy all Terraform-managed resources but will NOT delete the pre-existing security groups or VPC infrastructure.
+
+---
+
+## Support
+
+For issues specific to the permissions boundary implementation, please open an issue on the [permissions-boundary branch](https://github.com/thirionjwf/n8n-aws-ecs/tree/permissions-boundary).
+
+For general n8n deployment questions, refer to the upstream [elasticscale/terraform-aws-n8n](https://github.com/elasticscale/terraform-aws-n8n) repository.
 
 Provision **n8n** on **AWS ECS Fargate** using the `elasticscale/n8n/aws` Terraform module.
 
