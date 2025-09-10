@@ -83,6 +83,24 @@ resource "aws_iam_role_policy" "executionrole" {
         Resource = [
           "arn:aws:logs:*:*:*"
         ]
+      },
+      {
+        Effect = "Allow",
+        Action = [
+          "ecr:GetAuthorizationToken"
+        ],
+        Resource = "*"
+      },
+      {
+        Effect = "Allow",
+        Action = [
+          "ecr:BatchCheckLayerAvailability",
+          "ecr:GetDownloadUrlForLayer",
+          "ecr:BatchGetImage"
+        ],
+        Resource = [
+          "arn:aws:ecr:eu-west-1:314429811214:repository/external/n8n"
+        ]
       }
     ]
   })

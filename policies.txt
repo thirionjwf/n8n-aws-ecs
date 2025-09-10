@@ -32,6 +32,17 @@ PowerUserAccess Inline Policy:
 }
 
 
+
+
+
+aws --profile santam --region eu-west-1 ec2 authorize-security-group-ingress --group-id "sg-0be9829d4ff96e81a" --protocol tcp --port 2999 --source-group "sg-0a65622798dc793bb"
+Added EFS Ingress Rules:
+Port 2049 (NFS) - Standard EFS/NFS traffic
+Port 2999 (TLS) - Encrypted EFS traffic (transit encryption)
+Source:
+ECS Security Group (sg-0a65622798dc793bb)
+Allows ECS tasks to connect to EFS mount targets
+
 permission-boundary policy:
 {
     "Version": "2012-10-17",
