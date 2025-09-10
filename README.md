@@ -1,97 +1,108 @@
 # n8n on AWS ECS with Terraform
 
-Provision **n8n** on **AWS ECS Fargate** using the `elasticscale/n8n/aws` Terraform module.
+Provision **n8n** on **AWS ECS Fargate** using the [`elasticscale/terraform-aws-n8n`](https://github.com/elasticscale/terraform-aws-n8n) module.
 
-This project **assumes an existing VPC** — you will provide `vpc_id`, `subnet_ids`, and `public_subnet_ids` that already exist in your AWS account.
+This branch is designed for environments where **Terraform manages all resources**, including security groups and IAM roles. No permissions boundary is required.
+
+---
+
+## Features
+
+- Deploys n8n on AWS ECS Fargate with an Application Load Balancer and EFS storage
+- Manages all required security groups directly in Terraform
+- Supports both DockerHub and AWS ECR as container registries
+- Creates all necessary IAM roles and policies for ECS and ECR access
+
+---
+
+## Prerequisites
+
+- An existing VPC with:
+  - At least 3 private subnets (for ECS tasks)
+  - At least 3 public subnets (for the ALB)
+  - Subnets distributed across multiple availability zones
+- S3 bucket for Terraform state (and optional DynamoDB table for state locking)
+- AWS CLI profile with permissions to create all required resources
 
 ---
 
 ## Quick Start
 
-1. Copy the example files into place (required):
+1. Copy the example files into place:
     - `providers.tf.example` → `providers.tf`
     - `backend.hcl.example` → `backend.hcl`
     - `terraform.tfvars.example` → `terraform.tfvars`
 
-   Example:
-    
-        cp providers.tf.example providers.tf
-        cp backend.hcl.example backend.hcl
-        cp terraform.tfvars.example terraform.tfvars
-
-2. Edit `backend.hcl` and replace placeholders:
-    - Replace `profile = "your-profile"` with the name of your configured AWS CLI profile (one that has **Access Key ID** and **Secret Access Key**).
-    - Replace `bucket = "<your bucket name>"` with the name of your S3 bucket that will store Terraform state.
-    - Verify the backend `region` matches the S3 bucket’s region.
-    - (Optional) Set `dynamodb_table = "terraform-locks"` if you use state locking.
+2. Edit `backend.hcl`:
+    - Set your AWS CLI profile name
+    - Set your S3 bucket name
+    - Set the region and (optionally) DynamoDB table
 
 3. Edit `terraform.tfvars`:
-    - Set `aws_region` to the region where your **VPC/ECS/ALB/EFS** will be deployed.
-    - Provide your **existing networking** values:
-        - `vpc_id`
-        - `subnet_ids` (private/app subnets for ECS tasks)
-        - `public_subnet_ids` (public subnets for the ALB)
-    - Adjust any other variables as needed (see comments in the example file).
+    - Set `aws_region` for deployment
+    - Provide your VPC and subnet IDs
+    - Optionally set ECR repository or DockerHub image
 
-4. Configure AWS credentials & export your profile (must match `backend.hcl` and your intended account):
-
-        aws configure --profile your-profile
-        export AWS_PROFILE=your-profile
-
-5. Initialize Terraform using the backend config:
-
-        terraform init -reconfigure -backend-config=backend.hcl
-
-6. Validate, plan, and apply:
-
-        terraform validate
-        terraform plan
-        terraform apply
-
----
-
-## Important Notes
-
-- **Assumes Existing VPC:** This stack does **not** create a VPC. All `subnet_ids` must belong to the provided `vpc_id`.
-- **Replace Placeholders:**
-  - `your-profile` → your actual AWS CLI profile name.
-  - `"<your bucket name>"` → the S3 bucket that stores Terraform state.
-- **Check Regions:**
-  - `backend.hcl: region` → S3 **backend** (state) region.
-  - `terraform.tfvars: aws_region` → **deployment** region for ECS/ALB/EFS/VPC.
-  These can differ; ensure each is correct for its purpose.
-- **Credentials:** Ensure your chosen profile has valid **Access Key ID** and **Secret Access Key**, and permissions to read/create the required resources.
-
----
-
-## Common Commands
-
-    # Use a specific profile for this shell
+4. Configure AWS credentials:
+    ```sh
+    aws configure --profile your-profile
     export AWS_PROFILE=your-profile
+    ```
 
-    # Reconfigure backend if backend.hcl changes
+5. Initialize and deploy:
+    ```sh
     terraform init -reconfigure -backend-config=backend.hcl
-
-    # Standard workflow
     terraform validate
     terraform plan
     terraform apply
+    ```
 
-    # Tear down the stack
-    terraform destroy
+---
+
+## Security Groups
+
+Terraform will create and manage the following security groups:
+
+| Security Group | Purpose | Inbound Rules | Outbound Rules |
+|---------------|---------|---------------|----------------|
+| n8n-alb       | Application Load Balancer | TCP 80, 443 from 0.0.0.0/0 | All traffic |
+| n8n-sg        | ECS Tasks                 | TCP 5678 from n8n-alb SG    | All traffic |
+| n8n-efs       | Elastic File System       | TCP 2049, 2999 from n8n-sg  | All traffic |
+
+---
+
+## Container Registry
+
+- **DockerHub**: Default image is `n8nio/n8n:latest`
+- **ECR**: To use a private ECR image, push your image and set the repository name in `terraform.tfvars`
+
+Example ECR push:
+```sh
+docker pull n8nio/n8n:latest
+docker tag n8nio/n8n:latest <account-id>.dkr.ecr.<region>.amazonaws.com/external/n8n:latest
+aws ecr get-login-password --region <region> | docker login --username AWS --password-stdin <account-id>.dkr.ecr.<region>.amazonaws.com
+docker push <account-id>.dkr.ecr.<region>.amazonaws.com/external/n8n:latest
+```
+
+---
+
+## Cleanup
+
+To destroy all resources:
+```sh
+terraform destroy
+```
 
 ---
 
 ## Troubleshooting
 
-- `no matching EC2 VPC found`
-    - Confirm `aws_region` in `terraform.tfvars` matches the VPC’s region.
-    - Verify `AWS_PROFILE` points to the correct AWS account.
-    - Ensure all `subnet_ids` belong to the specified `vpc_id` in that account/region. For a quick check:
+- **VPC/Subnet Issues**: Ensure all subnet IDs belong to the specified VPC and region.
+- **Backend Errors**: Double-check S3 bucket, region, and profile in `backend.hcl`.
+- **ECR Authentication**: Ensure IAM roles have correct ECR permissions.
 
-            AWS_PROFILE=your-profile aws ec2 describe-vpcs --vpc-ids vpc-xxxxxxxx --region <aws_region>
+---
 
-- Backend init errors
-    - Double-check `backend.hcl` values (`bucket`, `region`, `profile`, optional `dynamodb_table`) and re-run:
+## Attribution
 
-            terraform init -reconfigure -backend-config=backend.hcl
+Based on [`elasticscale/terraform-aws-n8n`](https://github.com/elasticscale/terraform-aws-n8n).
