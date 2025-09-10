@@ -97,3 +97,9 @@ variable "ecs_security_group_id" {
   type        = string
   description = "ID of existing ECS security group (managed by admins)"
 }
+
+variable "ecr_repository_name" {
+  type        = string
+  description = "Name of the ECR repository for n8n images"
+  default     = "external/n8n"
+}

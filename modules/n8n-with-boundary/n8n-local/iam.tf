@@ -99,7 +99,7 @@ resource "aws_iam_role_policy" "executionrole" {
           "ecr:BatchGetImage"
         ],
         Resource = [
-          "arn:aws:ecr:eu-west-1:314429811214:repository/external/n8n"
+          "arn:aws:ecr:eu-west-1:314429811214:repository/${var.ecr_repository_name}"
         ]
       }
     ]

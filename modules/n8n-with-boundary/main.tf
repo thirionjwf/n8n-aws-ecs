@@ -32,6 +32,9 @@ module "n8n" {
   alb_security_group_id = var.alb_security_group_id
   efs_security_group_id = var.efs_security_group_id
   ecs_security_group_id = var.ecs_security_group_id
+
+  # ECR Repository
+  ecr_repository_name = var.ecr_repository_name
 }
 
 # No need for null_resource approach since roles are created with permissions boundary natively
