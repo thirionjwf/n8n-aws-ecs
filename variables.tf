@@ -130,3 +130,15 @@ variable "ecr_repository_name" {
   description = "Name of the ECR repository for n8n images"
   default     = "external/n8n"
 }
+
+variable "route53_zone_id" {
+  type        = string
+  description = "Route 53 Hosted Zone ID for santam.ltd."
+  default     = null
+}
+
+variable "route53_record_name" {
+  type        = string
+  description = "DNS name for the n8n service (e.g. n8n.santam.ltd)"
+  default     = null
+}
