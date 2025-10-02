@@ -54,6 +54,13 @@ This is a specialized fork of the [elasticscale/terraform-aws-n8n](https://githu
    }
    ```
 
+4. **Route 53 Public Hosted Zone & ACM Certificate**:
+   - Create a public hosted zone in Route 53 for your domain (e.g., `example.com`).
+   - Update your domain registrar to use the name servers provided by the Route 53 hosted zone.
+   - In AWS Certificate Manager (ACM), request a new certificate for your desired subdomain (e.g., `example.com`).
+   - When prompted, add the DNS validation records to your Route 53 hosted zone.
+   - Wait until the ACM certificate status is **Issued** before running `terraform apply`.
+
 ### Container Registry Options
 
 #### Option 1: Private ECR (Recommended for Corporate)
