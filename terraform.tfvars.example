@@ -16,12 +16,13 @@ use_private_subnets = true
 # ALB / TLS
 alb_allowed_cidr_blocks = ["0.0.0.0/0"]  # tighten to your office / Cloudflare ranges
 ssl_policy              = "ELBSecurityPolicy-TLS13-1-2-2021-06"
+acm_certificate_arn     = "arn:aws:acm:eu-west-1:123456789012:certificate/your-certificate-id"
 
 # ECS / app
 container_image = "123456789012.dkr.ecr.eu-west-1.amazonaws.com/your-repo/n8n:latest"
 desired_count   = 1
 fargate_type    = "FARGATE_SPOT"
-url             = "https://n8n.your-domain.com/"
+url             = null
 
 # Naming & tagging
 prefix = "n8n"

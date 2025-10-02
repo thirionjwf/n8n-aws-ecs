@@ -12,9 +12,9 @@ module "n8n" {
   public_subnet_ids   = var.public_subnet_ids
   use_private_subnets = var.use_private_subnets
 
-  # ALB access / TLS (Cloudflare terminates TLS; keep ACM null)
+  # ALB access / TLS
   alb_allowed_cidr_blocks = var.alb_allowed_cidr_blocks
-  certificate_arn         = null
+  certificate_arn         = var.acm_certificate_arn
   ssl_policy              = var.ssl_policy
 
   # ECS / app

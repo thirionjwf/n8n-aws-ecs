@@ -57,6 +57,12 @@ variable "ssl_policy" {
   default     = "ELBSecurityPolicy-TLS13-1-2-2021-06"
 }
 
+variable "acm_certificate_arn" {
+  type        = string
+  description = "ACM certificate ARN for HTTPS listener on ALB. Must be in the same region as the ALB."
+  default     = null
+}
+
 # ECS / app
 variable "container_image" {
   type        = string
