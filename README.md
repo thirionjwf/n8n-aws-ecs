@@ -142,6 +142,8 @@ Use the default DockerHub image: `n8nio/n8n:latest`
    terraform apply
    ```
 
+> **Important:** Set the `url` variable in `terraform.tfvars` to the public DNS name (e.g. `https://n8n.example.com/`) that users and webhooks will access. This must match your Route 53 Alias record and SSL certificate. Do NOT use the raw ALB DNS name.
+
 ---
 
 ## Architecture
@@ -324,6 +326,8 @@ This project **assumes an existing VPC** — you will provide `vpc_id`, `subnet_
         terraform validate
         terraform plan
         terraform apply
+
+> **Important:** Set the `url` variable in `terraform.tfvars` to the public DNS name (e.g. `https://n8n.example.com/`) that users and webhooks will access. This must match your Route 53 Alias record and SSL certificate. Do NOT use the raw ALB DNS name.
 
 ---
 
