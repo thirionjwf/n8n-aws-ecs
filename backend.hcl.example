@@ -1,0 +1,9 @@
+# Migrate with: terraform init -backend-config=backend.hcl -migrate-state
+
+bucket         = "<your-terraform-state-aws-s3-bucket>"
+key            = "n8n/terraform.tfstate"
+region         = "<your-region>"
+profile        = "<your-profile>"
+dynamodb_table = "<your-terraform-dynamodb-locks-table>"
+encrypt        = true
+

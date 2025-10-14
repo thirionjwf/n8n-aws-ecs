@@ -1,0 +1,42 @@
+# AWS settings
+aws_region  = "<your-region>"
+aws_profile = "<your-profile>"  # or set AWS_PROFILE env var
+
+permissions_boundary_arn = "arn:aws:iam::<your-account-id>:policy/<your-permission-boundary-policy-name>"
+
+# Networking
+vpc_id              = "vpc-xxxxxxxxx"
+subnet_ids          = ["subnet-aaaaaaaa", "subnet-bbbbbbbb", "subnet-cccccccc"]
+public_subnet_ids   = ["subnet-dddddddd", "subnet-eeeeeeee", "subnet-ffffffff"]
+use_private_subnets = true
+
+# ALB / TLS
+alb_allowed_cidr_blocks = ["0.0.0.0/0"]  # tighten to your office / Cloudflare ranges
+ssl_policy              = "ELBSecurityPolicy-TLS13-1-2-2021-06"
+acm_certificate_arn     = "arn:aws:acm:<your-region>:<your-account-id>:certificate/<your-certificate-id>"
+
+# ECS / app
+container_image = "<your-repo-id>.dkr.ecr.<your-region>.amazonaws.com/<your-repo-name>/n8n:latest"
+desired_count   = 1
+fargate_type    = "FARGATE_SPOT"
+url             = "https://n8n.example.com/"
+
+# Naming & tagging
+prefix = "n8n"
+tags = {
+  Environment = "<your-env>"        # change to dev/staging/production as needed
+  Owner       = "<your-team>"  # update with your team/owner name
+}
+
+# Existing Security Groups (managed by admins)
+alb_security_group_id = "sg-xxxxxxxxx"
+efs_security_group_id = "sg-yyyyyyyyy"
+ecs_security_group_id = "sg-zzzzzzzzz"
+
+# ECR Repository
+ecr_repository_name = "<your-repo>/n8n"
+
+# Route 53
+route53_zone_id      = "<your-zone-id>"
+route53_record_name  = "n8n.example.com"
+
