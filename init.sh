@@ -1,13 +1,13 @@
 #!/bin/bash
 
-AWS_PROFILE=YOUR_PROFILE aws s3api create-bucket \
-  --bucket YOUR_TERRAFORM_STATE_AWS_S3_BUCKET \
-  --region YOUR_REGION \
-  --create-bucket-configuration LocationConstraint=YOUR_REGION
+AWS_PROFILE=<your-profile> aws s3api create-bucket \
+  --bucket <your-terraform-state-aws-s3-bucket> \
+  --region <your-region> \
+  --create-bucket-configuration LocationConstraint=<your-region>
 
-AWS_PROFILE=YOUR_PROFILE aws dynamodb create-table \
-  --table-name YOUR_TERRAFORM_DYNAMODB_LOCKS_TABLE \
+AWS_PROFILE=<your-profile> aws dynamodb create-table \
+  --table-name <your-terraform-dynamodb-locks-table> \
   --attribute-definitions AttributeName=LockID,AttributeType=S \
   --key-schema AttributeName=LockID,KeyType=HASH \
   --provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5 \
-  --region YOUR_REGION
+  --region <your-region>
